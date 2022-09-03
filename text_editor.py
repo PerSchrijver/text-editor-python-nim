@@ -1,5 +1,7 @@
 #!/usr/bin/env python3.10
+from dataclasses import dataclass, replace
 import string
+from typing import NamedTuple
 import pygame
 
 # Initialize performance necessary constants
@@ -15,18 +17,22 @@ pygame.init()
 # Enable key repeating
 pygame.key.set_repeat(300, 1000 // 20)
 
+# Editor classes
+@dataclass(frozen=True)
+class Line:
+    font: pygame.font.Font
+    size: int
+    text: str
+
+
 # Initialize editor state
 REGULAR_FONT_AND_SIZE = "Roboto-Regular.ttf", 16
 lines = [
-    (
-        "Roboto-Bold.ttf",
-        40,
-        "Answers questions",
-    ),
-    (*REGULAR_FONT_AND_SIZE, "What is the dataset? We do"),
-    (*REGULAR_FONT_AND_SIZE, "no know. But what is life?"),
-    (*REGULAR_FONT_AND_SIZE, ""),
-    (*REGULAR_FONT_AND_SIZE, "Life is Mineplex"),
+    Line("Roboto-Bold.ttf", 40, "Answers questions"),
+    Line(*REGULAR_FONT_AND_SIZE, "What is the dataset? We do"),
+    Line(*REGULAR_FONT_AND_SIZE, "no know. But what is life?"),
+    Line(*REGULAR_FONT_AND_SIZE, ""),
+    Line(*REGULAR_FONT_AND_SIZE, "Life is Mineplex"),
 ]
 cursor_line = 1
 cursor_row = "Life is Mineplex".find("Mineplex")
@@ -38,6 +44,9 @@ print([name for name in dir(pygame) if getattr(pygame, name) == 57])
 running = True
 clock = pygame.time.Clock()
 while running:
+    # Debug test
+    assert all(isinstance(l, Line) for l in lines)
+
     # Handle events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -46,14 +55,14 @@ while running:
         # Backspace
         if event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
             if len(lines) > cursor_line and cursor_row > 0:
-                font, size, text = lines[cursor_line]
-                lines[cursor_line] = font, size, text[: cursor_row - 1] + text[cursor_row + 0 :]
+                text = lines[cursor_line].text
+                lines[cursor_line] = replace(lines[cursor_line], text=text[: cursor_row - 1] + text[cursor_row + 0 :])
                 cursor_row -= 1
             elif len(lines) > cursor_line and cursor_row == 0 and cursor_line > 0:
                 line = lines[cursor_line]
-                font, size, text_a = lines[cursor_line - 1]
-                _, _, text_b = lines[cursor_line]
-                lines[cursor_line - 1] = font, size, text_a + text_b
+                text_a = lines[cursor_line - 1].text
+                text_b = lines[cursor_line].text
+                lines[cursor_line - 1] = replace(lines[cursor_line - 1], text=text_a + text_b)
                 lines.pop(cursor_line)
                 cursor_line -= 1
                 cursor_row = len(text_a)
@@ -76,14 +85,14 @@ while running:
 
             # Enter
             if event.key == pygame.K_RETURN:
-                font, size, text = lines[cursor_line]
-                lines[cursor_line] = font, size, text[:cursor_row]
+                text = lines[cursor_line].text
+                lines[cursor_line] = replace(lines[cursor_line], text=text[:cursor_row])
                 if pressed_shift:
-                    lines.insert(cursor_line + 1, (*REGULAR_FONT_AND_SIZE, text[cursor_row:]))
-                    lines.insert(cursor_line + 1, (REGULAR_FONT_AND_SIZE[0], 8, ""))
+                    lines.insert(cursor_line + 1, Line(*REGULAR_FONT_AND_SIZE, text[cursor_row:]))
+                    lines.insert(cursor_line + 1, Line(REGULAR_FONT_AND_SIZE[0], 8, ""))
                     cursor_line += 1
                 else:
-                    lines.insert(cursor_line + 1, (*REGULAR_FONT_AND_SIZE, text[cursor_row:]))
+                    lines.insert(cursor_line + 1, Line(*REGULAR_FONT_AND_SIZE, text[cursor_row:]))
                 cursor_line += 1
                 cursor_row = 0
 
@@ -93,15 +102,17 @@ while running:
 
             # Normal typing
             elif event.unicode and event.unicode in DISPLAYABLE_CHARACTERS:
-                font, size, text = lines[cursor_line]
-                lines[cursor_line] = font, size, text[:cursor_row] + event.unicode + text[cursor_row:]
+                text = lines[cursor_line].text
+                lines[cursor_line] = replace(
+                    lines[cursor_line], text=text[:cursor_row] + event.unicode + text[cursor_row:]
+                )
                 cursor_row += 1
 
     # Paint background
     screen.fill((255, 255, 255))
 
     # Draw text
-    def line(font, size, text):
+    def draw_line(font, size, text):
         global y
         real_font = pygame.font.Font(font, size)
         screen.blit(real_font.render(text, True, (55, 53, 47)), (LEFT_PADDING, y))
@@ -109,22 +120,22 @@ while running:
 
     y = 200
     line_index = 0
-    for font, size, text in lines:
+    for l in lines:
         # Draw cursor
         if line_index == cursor_line:
             pygame.draw.rect(
                 screen,
                 (55, 53, 47),
                 (
-                    LEFT_PADDING + pygame.font.Font(font, size).size(text[:cursor_row])[0] - 1,
+                    LEFT_PADDING + pygame.font.Font(l.font, l.size).size(l.text[:cursor_row])[0] - 1,
                     y + 1,
                     1,
-                    pygame.font.Font(font, size).size("X")[1] - 2,
+                    pygame.font.Font(l.font, l.size).size("X")[1] - 2,
                 ),
             )
 
         # Draw line
-        line(font, size, text)
+        draw_line(l.font, l.size, l.text)
         line_index += 1
 
     # Refresh screen
