@@ -114,6 +114,7 @@ while running:
     # Draw text
     def draw_line(line):
         global y
+        pygame.draw.rect(screen, (240, 140, 130), (LEFT_PADDING - 10, y - line.space_before, 3, line.space_before))
         real_font = pygame.font.Font(line.font, line.size)
         screen.blit(real_font.render(line.text, True, (55, 53, 47)), (LEFT_PADDING, y))
         y += real_font.size(line.text)[1]
@@ -121,6 +122,8 @@ while running:
     y = 200
     line_index = 0
     for line in lines:
+        y += line.space_before
+
         # Draw cursor
         if line_index == cursor_line:
             pygame.draw.rect(
