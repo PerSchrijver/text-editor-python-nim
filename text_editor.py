@@ -120,22 +120,22 @@ while running:
 
     y = 200
     line_index = 0
-    for l in lines:
+    for line in lines:
         # Draw cursor
         if line_index == cursor_line:
             pygame.draw.rect(
                 screen,
                 (55, 53, 47),
                 (
-                    LEFT_PADDING + pygame.font.Font(l.font, l.size).size(l.text[:cursor_row])[0] - 1,
+                    LEFT_PADDING + pygame.font.Font(line.font, line.size).size(line.text[:cursor_row])[0] - 1,
                     y + 1,
                     1,
-                    pygame.font.Font(l.font, l.size).size("X")[1] - 2,
+                    pygame.font.Font(line.font, line.size).size("X")[1] - 2,
                 ),
             )
 
         # Draw line
-        draw_line(l.font, l.size, l.text)
+        draw_line(line.font, line.size, line.text)
         line_index += 1
 
     # Refresh screen
