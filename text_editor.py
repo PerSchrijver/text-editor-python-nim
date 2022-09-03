@@ -39,9 +39,6 @@ lines = [
 cursor_line = 1
 cursor_row = "Life is Mineplex".find("Mineplex")
 
-print([name for name in dir(pygame) if getattr(pygame, name) == 57])
-# exit()
-
 # Run main loop
 running = True
 clock = pygame.time.Clock()
