@@ -23,7 +23,7 @@ class Line:
     font: pygame.font.Font
     size: int
     text: str
-    space_after: int
+    space_before: int
 
 
 # Initialize editor state
@@ -31,10 +31,10 @@ REGULAR_FONT_AND_SIZE = "Roboto-Regular.ttf", 16
 lines = [
     Line("Roboto-Bold.ttf", 40, "Answers questions", 0),
     Line(*REGULAR_FONT_AND_SIZE, "What is the dataset? We do", 0),
-    Line(*REGULAR_FONT_AND_SIZE, "no know. But what is life?", 0),
+    Line(*REGULAR_FONT_AND_SIZE, "no know. But what is life?", 8),
     Line(*REGULAR_FONT_AND_SIZE, "", 0),
-    Line(*REGULAR_FONT_AND_SIZE, "Life is Mineplex", 8),
-    Line(*REGULAR_FONT_AND_SIZE, "Life is Super Paintball", 0),
+    Line(*REGULAR_FONT_AND_SIZE, "Life is Mineplex", 0),
+    Line(*REGULAR_FONT_AND_SIZE, "Life is Super Paintball", 30),
 ]
 cursor_line = 1
 cursor_row = "Life is Mineplex".find("Mineplex")
