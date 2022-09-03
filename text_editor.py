@@ -112,11 +112,11 @@ while running:
     screen.fill((255, 255, 255))
 
     # Draw text
-    def draw_line(font, size, text):
+    def draw_line(line):
         global y
-        real_font = pygame.font.Font(font, size)
-        screen.blit(real_font.render(text, True, (55, 53, 47)), (LEFT_PADDING, y))
-        y += real_font.size(text)[1]
+        real_font = pygame.font.Font(line.font, line.size)
+        screen.blit(real_font.render(line.text, True, (55, 53, 47)), (LEFT_PADDING, y))
+        y += real_font.size(line.text)[1]
 
     y = 200
     line_index = 0
@@ -135,7 +135,7 @@ while running:
             )
 
         # Draw line
-        draw_line(line.font, line.size, line.text)
+        draw_line(line)
         line_index += 1
 
     # Refresh screen
