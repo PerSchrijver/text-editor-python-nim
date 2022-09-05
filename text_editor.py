@@ -25,6 +25,13 @@ class Line:
     space_before: int
 
 
+@dataclass
+class TypingAction:
+    insert_line: int
+    insert_row: int
+    content: str
+
+
 # Initialize editor state
 REGULAR_FONT_AND_SIZE = "Roboto-Regular.ttf", 16
 lines = [
@@ -38,6 +45,7 @@ lines = [
 cursor_line = 1
 cursor_row = "Life is Mineplex".find("Mineplex")
 maybe_saved_cursor_row = None
+actions = []
 
 # Run main loop
 running = True
@@ -99,6 +107,7 @@ while running:
 
             # Normal typing
             elif event.unicode and event.unicode in DISPLAYABLE_CHARACTERS:
+                actions.append(TypingAction(insert_line=cursor_line, insert_row=cursor_row, content=event.unicode))
                 text = lines[cursor_line].text
                 lines[cursor_line] = replace(
                     lines[cursor_line], text=text[:cursor_row] + event.unicode + text[cursor_row:]
@@ -142,6 +151,19 @@ while running:
                         cursor_row = maybe_saved_cursor_row
                     cursor_row = min(cursor_row, len(lines[cursor_line].text))
                     assert cursor_row in range(len(lines[cursor_line].text) + 1)
+
+            # Undo
+            elif pressed_control and event.key == pygame.K_z:
+                if actions:
+                    last_action = actions.pop()
+                    assert isinstance(last_action, TypingAction)
+                    text = lines[last_action.insert_line].text
+                    undone_text = (
+                        text[: last_action.insert_row] + text[len(last_action.content) + last_action.insert_row :]
+                    )
+                    lines[last_action.insert_line] = replace(lines[last_action.insert_line], text=undone_text)
+                    cursor_row = last_action.insert_row
+                    cursor_line = last_action.insert_line
 
         # Screen resizing
         elif event.type == pygame.WINDOWRESIZED:
