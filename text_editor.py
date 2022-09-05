@@ -107,7 +107,7 @@ while running:
 
             # Movement left
             elif pressed_control and event.key == pygame.K_h:
-                can_move_left = (cursor_row - 1) in range(len(lines[cursor_line].text))
+                can_move_left = (cursor_row - 1) in range(len(lines[cursor_line].text) + 1)
                 if can_move_left:
                     cursor_row -= 1
 
