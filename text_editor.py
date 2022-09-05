@@ -125,6 +125,14 @@ while running:
                     cursor_row = min(cursor_row, len(lines[cursor_line].text))
                     assert cursor_row in range(len(lines[cursor_line].text) + 1)
 
+            # Movement up
+            elif pressed_control and event.key == pygame.K_k:
+                can_move_up = (cursor_line - 1) in range(len(lines))
+                if can_move_up:
+                    cursor_line -= 1
+                    cursor_row = min(cursor_row, len(lines[cursor_line].text))
+                    assert cursor_row in range(len(lines[cursor_line].text) + 1)
+
     # Paint background
     screen.fill((255, 255, 255))
 
