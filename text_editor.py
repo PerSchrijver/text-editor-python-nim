@@ -31,6 +31,14 @@ class TypingAction:
     insert_row: int
     content: str
 
+    def undo(self):
+        global cursor_row, cursor_line
+        text = lines[self.insert_line].text
+        undone_text = text[: self.insert_row] + text[len(self.content) + self.insert_row :]
+        lines[self.insert_line] = replace(lines[self.insert_line], text=undone_text)
+        cursor_row = self.insert_row
+        cursor_line = self.insert_line
+
 
 @dataclass
 class NewlineAction:
@@ -39,12 +47,27 @@ class NewlineAction:
     line_content: str
     big_new_line: bool
 
+    def undo(self):
+        global cursor_row, cursor_line
+        lines[self.from_line] = replace(lines[self.from_line], text=self.line_content)
+        lines.pop(self.from_line + 1)
+        cursor_row = self.from_row
+        cursor_line = self.from_line
+
 
 @dataclass
 class BackspaceCharacterAction:
     from_line: int
     from_row: int
     content: str
+
+    def undo(self):
+        global cursor_row, cursor_line
+        text = lines[self.from_line].text
+        undone_text = text[: self.from_row - 1] + self.content + text[self.from_row - 1 :]
+        lines[self.from_line] = replace(lines[self.from_line], text=undone_text)
+        cursor_row = self.from_row
+        cursor_line = self.from_line
 
 
 @dataclass
@@ -53,6 +76,13 @@ class BackspaceNewlineAction:
     from_row: int
     first_line: Line
     second_line: Line
+
+    def undo(self):
+        global cursor_row, cursor_line
+        lines[self.from_line - 1] = self.first_line
+        lines.insert(self.from_line, self.second_line)
+        cursor_row = self.from_row
+        cursor_line = self.from_line
 
 
 # Initialize editor state
@@ -200,41 +230,7 @@ while running:
             elif pressed_control and event.key == pygame.K_z:
                 if actions:
                     last_action = actions.pop()
-
-                    if isinstance(last_action, TypingAction):
-                        text = lines[last_action.insert_line].text
-                        undone_text = (
-                            text[: last_action.insert_row] + text[len(last_action.content) + last_action.insert_row :]
-                        )
-                        lines[last_action.insert_line] = replace(lines[last_action.insert_line], text=undone_text)
-                        cursor_row = last_action.insert_row
-                        cursor_line = last_action.insert_line
-
-                    elif isinstance(last_action, NewlineAction):
-                        lines[last_action.from_line] = replace(
-                            lines[last_action.from_line], text=last_action.line_content
-                        )
-                        lines.pop(last_action.from_line + 1)
-                        cursor_row = last_action.from_row
-                        cursor_line = last_action.from_line
-
-                    elif isinstance(last_action, BackspaceCharacterAction):
-                        text = lines[last_action.from_line].text
-                        undone_text = (
-                            text[: last_action.from_row - 1] + last_action.content + text[last_action.from_row - 1 :]
-                        )
-                        lines[last_action.from_line] = replace(lines[last_action.from_line], text=undone_text)
-                        cursor_row = last_action.from_row
-                        cursor_line = last_action.from_line
-
-                    elif isinstance(last_action, BackspaceNewlineAction):
-                        lines[last_action.from_line - 1] = last_action.first_line
-                        lines.insert(last_action.from_line, last_action.second_line)
-                        cursor_row = last_action.from_row
-                        cursor_line = last_action.from_line
-
-                    else:
-                        raise ValueError(last_action)
+                    last_action.undo()
 
         # Screen resizing
         elif event.type == pygame.WINDOWRESIZED:
