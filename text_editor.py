@@ -32,6 +32,14 @@ class TypingAction:
     content: str
 
 
+@dataclass
+class NewlineAction:
+    from_line: int
+    from_row: int
+    line_content: str
+    big_new_line: bool
+
+
 # Initialize editor state
 REGULAR_FONT_AND_SIZE = "Roboto-Regular.ttf", 16
 lines = [
@@ -92,6 +100,14 @@ while running:
 
             # Enter
             if event.key == pygame.K_RETURN:
+                actions.append(
+                    NewlineAction(
+                        from_line=cursor_line,
+                        from_row=cursor_row,
+                        line_content=lines[cursor_line].text,
+                        big_new_line=pressed_shift,
+                    )
+                )
                 text = lines[cursor_line].text
                 lines[cursor_line] = replace(lines[cursor_line], text=text[:cursor_row])
                 if pressed_shift:
@@ -156,14 +172,26 @@ while running:
             elif pressed_control and event.key == pygame.K_z:
                 if actions:
                     last_action = actions.pop()
-                    assert isinstance(last_action, TypingAction)
-                    text = lines[last_action.insert_line].text
-                    undone_text = (
-                        text[: last_action.insert_row] + text[len(last_action.content) + last_action.insert_row :]
-                    )
-                    lines[last_action.insert_line] = replace(lines[last_action.insert_line], text=undone_text)
-                    cursor_row = last_action.insert_row
-                    cursor_line = last_action.insert_line
+
+                    if isinstance(last_action, TypingAction):
+                        text = lines[last_action.insert_line].text
+                        undone_text = (
+                            text[: last_action.insert_row] + text[len(last_action.content) + last_action.insert_row :]
+                        )
+                        lines[last_action.insert_line] = replace(lines[last_action.insert_line], text=undone_text)
+                        cursor_row = last_action.insert_row
+                        cursor_line = last_action.insert_line
+
+                    elif isinstance(last_action, NewlineAction):
+                        lines[last_action.from_line] = replace(
+                            lines[last_action.from_line], text=last_action.line_content
+                        )
+                        lines.pop(last_action.from_line + 1)
+                        cursor_row = last_action.from_row
+                        cursor_line = last_action.from_line
+
+                    else:
+                        raise ValueError(last_action)
 
         # Screen resizing
         elif event.type == pygame.WINDOWRESIZED:
