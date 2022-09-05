@@ -105,6 +105,18 @@ while running:
                 )
                 cursor_row += 1
 
+            # Movement left
+            elif pressed_control and event.key == pygame.K_h:
+                can_move_left = (cursor_row - 1) in range(len(lines[cursor_line].text))
+                if can_move_left:
+                    cursor_row -= 1
+
+            # Movement right
+            elif pressed_control and event.key == pygame.K_l:
+                can_move_right = (cursor_row + 1) in range(len(lines[cursor_line].text))
+                if can_move_right:
+                    cursor_row += 1
+
     # Paint background
     screen.fill((255, 255, 255))
 
