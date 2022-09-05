@@ -113,7 +113,7 @@ while running:
 
             # Movement right
             elif pressed_control and event.key == pygame.K_l:
-                can_move_right = (cursor_row + 1) in range(len(lines[cursor_line].text))
+                can_move_right = (cursor_row + 1) in range(len(lines[cursor_line].text) + 1)
                 if can_move_right:
                     cursor_row += 1
 
