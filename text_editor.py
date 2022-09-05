@@ -10,7 +10,6 @@ DISPLAYABLE_CHARACTERS = set(string.printable) - set(" \t\r\n\x0b\x0c")
 # Initialize screen
 WIDTH, HEIGHT = 1280, 720
 LEFT_PADDING = 400
-MIDDLE_WIDTH = WIDTH - LEFT_PADDING * 2
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.init()
 
