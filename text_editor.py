@@ -38,6 +38,7 @@ lines = [
 ]
 cursor_line = 1
 cursor_row = "Life is Mineplex".find("Mineplex")
+maybe_saved_cursor_row = None
 
 # Run main loop
 running = True
@@ -107,12 +108,14 @@ while running:
 
             # Movement left
             elif pressed_control and event.key == pygame.K_h:
+                maybe_saved_cursor_row = None
                 can_move_left = (cursor_row - 1) in range(len(lines[cursor_line].text) + 1)
                 if can_move_left:
                     cursor_row -= 1
 
             # Movement right
             elif pressed_control and event.key == pygame.K_l:
+                maybe_saved_cursor_row = None
                 can_move_right = (cursor_row + 1) in range(len(lines[cursor_line].text) + 1)
                 if can_move_right:
                     cursor_row += 1
@@ -122,6 +125,10 @@ while running:
                 can_move_down = (cursor_line + 1) in range(len(lines))
                 if can_move_down:
                     cursor_line += 1
+                    if maybe_saved_cursor_row is None:
+                        maybe_saved_cursor_row = cursor_row
+                    else:
+                        cursor_row = maybe_saved_cursor_row
                     cursor_row = min(cursor_row, len(lines[cursor_line].text))
                     assert cursor_row in range(len(lines[cursor_line].text) + 1)
 
@@ -130,6 +137,10 @@ while running:
                 can_move_up = (cursor_line - 1) in range(len(lines))
                 if can_move_up:
                     cursor_line -= 1
+                    if maybe_saved_cursor_row is None:
+                        maybe_saved_cursor_row = cursor_row
+                    else:
+                        cursor_row = maybe_saved_cursor_row
                     cursor_row = min(cursor_row, len(lines[cursor_line].text))
                     assert cursor_row in range(len(lines[cursor_line].text) + 1)
 
