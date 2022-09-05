@@ -10,7 +10,7 @@ DISPLAYABLE_CHARACTERS = set(string.printable) - set(" \t\r\n\x0b\x0c")
 # Initialize screen
 screen_width, screen_height = 1280, 720
 LEFT_PADDING = 400
-screen = pygame.display.set_mode((screen_width, screen_height))
+screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
 pygame.init()
 
 # Enable key repeating
@@ -142,6 +142,11 @@ while running:
                         cursor_row = maybe_saved_cursor_row
                     cursor_row = min(cursor_row, len(lines[cursor_line].text))
                     assert cursor_row in range(len(lines[cursor_line].text) + 1)
+
+        # Screen resizing
+        elif event.type == pygame.WINDOWRESIZED:
+            screen_width = event.x
+            screen_height = event.y
 
     # Paint background
     screen.fill((255, 255, 255))
