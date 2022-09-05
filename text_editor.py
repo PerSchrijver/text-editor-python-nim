@@ -101,176 +101,184 @@ maybe_saved_cursor_row = None
 actions = []
 
 # Run main loop
-running = True
-clock = pygame.time.Clock()
-while running:
-    # Debug test
-    assert all(isinstance(l, Line) for l in lines)
+def main():
+    global cursor_line, cursor_row, maybe_saved_cursor_row
+    running = True
+    clock = pygame.time.Clock()
+    while running:
+        # Debug test
+        assert all(isinstance(l, Line) for l in lines)
 
-    # Handle events
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+        # Handle events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
-        # Backspace
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
-            if len(lines) > cursor_line and cursor_row > 0:
-                actions.append(
-                    BackspaceCharacterAction(
-                        from_line=cursor_line, from_row=cursor_row, content=lines[cursor_line].text[cursor_row - 1]
+            # Backspace
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
+                if len(lines) > cursor_line and cursor_row > 0:
+                    actions.append(
+                        BackspaceCharacterAction(
+                            from_line=cursor_line, from_row=cursor_row, content=lines[cursor_line].text[cursor_row - 1]
+                        )
                     )
-                )
-                text = lines[cursor_line].text
-                lines[cursor_line] = replace(lines[cursor_line], text=text[: cursor_row - 1] + text[cursor_row + 0 :])
-                cursor_row -= 1
-            elif len(lines) > cursor_line and cursor_row == 0 and cursor_line > 0:
-                actions.append(
-                    BackspaceNewlineAction(
-                        from_line=cursor_line,
-                        from_row=cursor_row,
-                        first_line=lines[cursor_line - 1],
-                        second_line=lines[cursor_line],
+                    text = lines[cursor_line].text
+                    lines[cursor_line] = replace(
+                        lines[cursor_line], text=text[: cursor_row - 1] + text[cursor_row + 0 :]
                     )
-                )
-                line = lines[cursor_line]
-                text_a = lines[cursor_line - 1].text
-                text_b = lines[cursor_line].text
-                lines[cursor_line - 1] = replace(lines[cursor_line - 1], text=text_a + text_b)
-                lines.pop(cursor_line)
-                cursor_line -= 1
-                cursor_row = len(text_a)
-
-        # Typing
-        if event.type == pygame.KEYDOWN:
-            # Save pressed keys
-            pressed_scancodes = list(pygame.key.get_pressed())
-            pressed_mods_int = pygame.key.get_mods()
-            pressed_control = bool(pressed_mods_int & pygame.KMOD_CTRL)
-            pressed_shift = bool(pressed_mods_int & pygame.KMOD_SHIFT)
-            pressed_alt = bool(pressed_mods_int & pygame.KMOD_ALT)
-            pressed_caps = pressed_scancodes[pygame.KSCAN_CAPSLOCK]
-
-            # Debug print
-            if event.unicode:
-                print(f"Pressed key {repr(event.unicode)} ({ord(event.unicode)}) with keycode {event.key}")
-            else:
-                print(f"Pressed empty key with keycode {event.key}")
-
-            # Enter
-            if event.key == pygame.K_RETURN:
-                actions.append(
-                    NewlineAction(
-                        from_line=cursor_line,
-                        from_row=cursor_row,
-                        line_content=lines[cursor_line].text,
-                        big_new_line=pressed_shift,
-                    )
-                )
-                text = lines[cursor_line].text
-                lines[cursor_line] = replace(lines[cursor_line], text=text[:cursor_row])
-                if pressed_shift:
-                    lines.insert(cursor_line + 1, Line(*REGULAR_FONT_AND_SIZE, text[cursor_row:], 8))
-                else:
-                    lines.insert(cursor_line + 1, Line(*REGULAR_FONT_AND_SIZE, text[cursor_row:], 0))
-                cursor_line += 1
-                cursor_row = 0
-
-            # Tab
-            elif event.key == pygame.K_TAB:
-                pass
-
-            # Normal typing
-            elif event.unicode and event.unicode in DISPLAYABLE_CHARACTERS:
-                actions.append(TypingAction(insert_line=cursor_line, insert_row=cursor_row, content=event.unicode))
-                text = lines[cursor_line].text
-                lines[cursor_line] = replace(
-                    lines[cursor_line], text=text[:cursor_row] + event.unicode + text[cursor_row:]
-                )
-                cursor_row += 1
-
-            # Movement left
-            elif pressed_control and event.key == pygame.K_h:
-                maybe_saved_cursor_row = None
-                can_move_left = (cursor_row - 1) in range(len(lines[cursor_line].text) + 1)
-                if can_move_left:
                     cursor_row -= 1
+                elif len(lines) > cursor_line and cursor_row == 0 and cursor_line > 0:
+                    actions.append(
+                        BackspaceNewlineAction(
+                            from_line=cursor_line,
+                            from_row=cursor_row,
+                            first_line=lines[cursor_line - 1],
+                            second_line=lines[cursor_line],
+                        )
+                    )
+                    line = lines[cursor_line]
+                    text_a = lines[cursor_line - 1].text
+                    text_b = lines[cursor_line].text
+                    lines[cursor_line - 1] = replace(lines[cursor_line - 1], text=text_a + text_b)
+                    lines.pop(cursor_line)
+                    cursor_line -= 1
+                    cursor_row = len(text_a)
 
-            # Movement right
-            elif pressed_control and event.key == pygame.K_l:
-                maybe_saved_cursor_row = None
-                can_move_right = (cursor_row + 1) in range(len(lines[cursor_line].text) + 1)
-                if can_move_right:
+            # Typing
+            if event.type == pygame.KEYDOWN:
+                # Save pressed keys
+                pressed_scancodes = list(pygame.key.get_pressed())
+                pressed_mods_int = pygame.key.get_mods()
+                pressed_control = bool(pressed_mods_int & pygame.KMOD_CTRL)
+                pressed_shift = bool(pressed_mods_int & pygame.KMOD_SHIFT)
+                pressed_alt = bool(pressed_mods_int & pygame.KMOD_ALT)
+                pressed_caps = pressed_scancodes[pygame.KSCAN_CAPSLOCK]
+
+                # Debug print
+                if event.unicode:
+                    print(f"Pressed key {repr(event.unicode)} ({ord(event.unicode)}) with keycode {event.key}")
+                else:
+                    print(f"Pressed empty key with keycode {event.key}")
+
+                # Enter
+                if event.key == pygame.K_RETURN:
+                    actions.append(
+                        NewlineAction(
+                            from_line=cursor_line,
+                            from_row=cursor_row,
+                            line_content=lines[cursor_line].text,
+                            big_new_line=pressed_shift,
+                        )
+                    )
+                    text = lines[cursor_line].text
+                    lines[cursor_line] = replace(lines[cursor_line], text=text[:cursor_row])
+                    if pressed_shift:
+                        lines.insert(cursor_line + 1, Line(*REGULAR_FONT_AND_SIZE, text[cursor_row:], 8))
+                    else:
+                        lines.insert(cursor_line + 1, Line(*REGULAR_FONT_AND_SIZE, text[cursor_row:], 0))
+                    cursor_line += 1
+                    cursor_row = 0
+
+                # Tab
+                elif event.key == pygame.K_TAB:
+                    pass
+
+                # Normal typing
+                elif event.unicode and event.unicode in DISPLAYABLE_CHARACTERS:
+                    actions.append(TypingAction(insert_line=cursor_line, insert_row=cursor_row, content=event.unicode))
+                    text = lines[cursor_line].text
+                    lines[cursor_line] = replace(
+                        lines[cursor_line], text=text[:cursor_row] + event.unicode + text[cursor_row:]
+                    )
                     cursor_row += 1
 
-            # Movement down
-            elif pressed_control and event.key == pygame.K_j:
-                can_move_down = (cursor_line + 1) in range(len(lines))
-                if can_move_down:
-                    cursor_line += 1
-                    if maybe_saved_cursor_row is None:
-                        maybe_saved_cursor_row = cursor_row
-                    else:
-                        cursor_row = maybe_saved_cursor_row
-                    cursor_row = min(cursor_row, len(lines[cursor_line].text))
-                    assert cursor_row in range(len(lines[cursor_line].text) + 1)
+                # Movement left
+                elif pressed_control and event.key == pygame.K_h:
+                    maybe_saved_cursor_row = None
+                    can_move_left = (cursor_row - 1) in range(len(lines[cursor_line].text) + 1)
+                    if can_move_left:
+                        cursor_row -= 1
 
-            # Movement up
-            elif pressed_control and event.key == pygame.K_k:
-                can_move_up = (cursor_line - 1) in range(len(lines))
-                if can_move_up:
-                    cursor_line -= 1
-                    if maybe_saved_cursor_row is None:
-                        maybe_saved_cursor_row = cursor_row
-                    else:
-                        cursor_row = maybe_saved_cursor_row
-                    cursor_row = min(cursor_row, len(lines[cursor_line].text))
-                    assert cursor_row in range(len(lines[cursor_line].text) + 1)
+                # Movement right
+                elif pressed_control and event.key == pygame.K_l:
+                    maybe_saved_cursor_row = None
+                    can_move_right = (cursor_row + 1) in range(len(lines[cursor_line].text) + 1)
+                    if can_move_right:
+                        cursor_row += 1
 
-            # Undo
-            elif pressed_control and event.key == pygame.K_z:
-                if actions:
-                    last_action = actions.pop()
-                    last_action.undo()
+                # Movement down
+                elif pressed_control and event.key == pygame.K_j:
+                    can_move_down = (cursor_line + 1) in range(len(lines))
+                    if can_move_down:
+                        cursor_line += 1
+                        if maybe_saved_cursor_row is None:
+                            maybe_saved_cursor_row = cursor_row
+                        else:
+                            cursor_row = maybe_saved_cursor_row
+                        cursor_row = min(cursor_row, len(lines[cursor_line].text))
+                        assert cursor_row in range(len(lines[cursor_line].text) + 1)
 
-        # Screen resizing
-        elif event.type == pygame.WINDOWRESIZED:
-            screen_width = event.x
-            screen_height = event.y
+                # Movement up
+                elif pressed_control and event.key == pygame.K_k:
+                    can_move_up = (cursor_line - 1) in range(len(lines))
+                    if can_move_up:
+                        cursor_line -= 1
+                        if maybe_saved_cursor_row is None:
+                            maybe_saved_cursor_row = cursor_row
+                        else:
+                            cursor_row = maybe_saved_cursor_row
+                        cursor_row = min(cursor_row, len(lines[cursor_line].text))
+                        assert cursor_row in range(len(lines[cursor_line].text) + 1)
 
-    # Paint background
-    screen.fill((255, 255, 255))
+                # Undo
+                elif pressed_control and event.key == pygame.K_z:
+                    if actions:
+                        last_action = actions.pop()
+                        last_action.undo()
 
-    # Draw text
-    def draw_line(line):
+            # Screen resizing
+            elif event.type == pygame.WINDOWRESIZED:
+                screen_width = event.x
+                screen_height = event.y
+
+        # Paint background
+        screen.fill((255, 255, 255))
+
+        # Draw text
+        def draw_line(line):
+            global y
+            pygame.draw.rect(screen, (240, 140, 130), (LEFT_PADDING - 10, y - line.space_before, 3, line.space_before))
+            real_font = pygame.font.Font(line.font, line.size)
+            screen.blit(real_font.render(line.text, True, (55, 53, 47)), (LEFT_PADDING, y))
+            y += real_font.size(line.text)[1]
+
         global y
-        pygame.draw.rect(screen, (240, 140, 130), (LEFT_PADDING - 10, y - line.space_before, 3, line.space_before))
-        real_font = pygame.font.Font(line.font, line.size)
-        screen.blit(real_font.render(line.text, True, (55, 53, 47)), (LEFT_PADDING, y))
-        y += real_font.size(line.text)[1]
+        y = 200
+        line_index = 0
+        for line in lines:
+            y += line.space_before
 
-    y = 200
-    line_index = 0
-    for line in lines:
-        y += line.space_before
+            # Draw cursor
+            if line_index == cursor_line:
+                pygame.draw.rect(
+                    screen,
+                    (55, 53, 47),
+                    (
+                        LEFT_PADDING + pygame.font.Font(line.font, line.size).size(line.text[:cursor_row])[0] - 1,
+                        y + 1,
+                        1,
+                        pygame.font.Font(line.font, line.size).size("X")[1] - 2,
+                    ),
+                )
 
-        # Draw cursor
-        if line_index == cursor_line:
-            pygame.draw.rect(
-                screen,
-                (55, 53, 47),
-                (
-                    LEFT_PADDING + pygame.font.Font(line.font, line.size).size(line.text[:cursor_row])[0] - 1,
-                    y + 1,
-                    1,
-                    pygame.font.Font(line.font, line.size).size("X")[1] - 2,
-                ),
-            )
+            # Draw line
+            draw_line(line)
+            line_index += 1
 
-        # Draw line
-        draw_line(line)
-        line_index += 1
+        # Refresh screen
+        pygame.display.flip()
 
-    # Refresh screen
-    pygame.display.flip()
+        clock.tick(60)
 
-    clock.tick(60)
+
+main()
