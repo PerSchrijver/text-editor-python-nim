@@ -31,6 +31,14 @@ class TypingAction:
     insert_row: int
     content: str
 
+    def do(self):
+        global cursor_row
+        text = lines[self.insert_line].text
+        lines[self.insert_line] = replace(
+            lines[self.insert_line], text=text[: self.insert_row] + self.content + text[self.insert_row :]
+        )
+        cursor_row = self.insert_row + 1
+
     def undo(self):
         global cursor_row, cursor_line
         text = lines[self.insert_line].text
@@ -186,11 +194,7 @@ def main():
                 # Normal typing
                 elif event.unicode and event.unicode in DISPLAYABLE_CHARACTERS:
                     actions.append(TypingAction(insert_line=cursor_line, insert_row=cursor_row, content=event.unicode))
-                    text = lines[cursor_line].text
-                    lines[cursor_line] = replace(
-                        lines[cursor_line], text=text[:cursor_row] + event.unicode + text[cursor_row:]
-                    )
-                    cursor_row += 1
+                    actions[-1].do()
 
                 # Movement left
                 elif pressed_control and event.key == pygame.K_h:
