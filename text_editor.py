@@ -80,6 +80,14 @@ class BackspaceCharacterAction:
     from_row: int
     content: str
 
+    def do(self):
+        global cursor_row
+        text = lines[self.from_line].text
+        lines[self.from_line] = replace(
+            lines[self.from_line], text=text[: self.from_row - 1] + text[self.from_row + 0 :]
+        )
+        cursor_row = self.from_row - 1
+
     def undo(self):
         global cursor_row, cursor_line
         text = lines[self.from_line].text
@@ -95,6 +103,15 @@ class BackspaceNewlineAction:
     from_row: int
     first_line: Line
     second_line: Line
+
+    def do(self):
+        global cursor_row, cursor_line
+        text_a = lines[self.from_line - 1].text
+        text_b = lines[self.from_line].text
+        lines[self.from_line - 1] = replace(lines[self.from_line - 1], text=text_a + text_b)
+        lines.pop(self.from_line)
+        cursor_line = self.from_line - 1
+        cursor_row = len(text_a)
 
     def undo(self):
         global cursor_row, cursor_line
@@ -141,11 +158,7 @@ def main():
                             from_line=cursor_line, from_row=cursor_row, content=lines[cursor_line].text[cursor_row - 1]
                         )
                     )
-                    text = lines[cursor_line].text
-                    lines[cursor_line] = replace(
-                        lines[cursor_line], text=text[: cursor_row - 1] + text[cursor_row + 0 :]
-                    )
-                    cursor_row -= 1
+                    actions[-1].do()
                 elif len(lines) > cursor_line and cursor_row == 0 and cursor_line > 0:
                     actions.append(
                         BackspaceNewlineAction(
@@ -155,13 +168,7 @@ def main():
                             second_line=lines[cursor_line],
                         )
                     )
-                    line = lines[cursor_line]
-                    text_a = lines[cursor_line - 1].text
-                    text_b = lines[cursor_line].text
-                    lines[cursor_line - 1] = replace(lines[cursor_line - 1], text=text_a + text_b)
-                    lines.pop(cursor_line)
-                    cursor_line -= 1
-                    cursor_row = len(text_a)
+                    actions[-1].do()
 
             # Typing
             if event.type == pygame.KEYDOWN:
