@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.10
 from dataclasses import dataclass, replace
+import pickle
 import string
 from typing import NamedTuple
 import pygame
@@ -121,6 +122,22 @@ class BackspaceNewlineAction:
         cursor_line = self.from_line
 
 
+# Function to handle doing actions where we check undoing the action leaves us in the initial state
+def do_action_checked(action):
+    initial_state = (lines, cursor_line, cursor_row)
+    initial_state_saved = pickle.dumps(initial_state)
+
+    action.do()
+    action.undo()
+
+    new_state = (lines, cursor_line, cursor_row)
+    new_state_saved = pickle.dumps(new_state)
+
+    assert new_state_saved == initial_state_saved
+
+    action.do()
+
+
 # Initialize editor state
 REGULAR_FONT_AND_SIZE = "Roboto-Regular.ttf", 16
 lines = [
@@ -158,7 +175,7 @@ def main():
                             from_line=cursor_line, from_row=cursor_row, content=lines[cursor_line].text[cursor_row - 1]
                         )
                     )
-                    actions[-1].do()
+                    do_action_checked(actions[-1])
                 elif len(lines) > cursor_line and cursor_row == 0 and cursor_line > 0:
                     actions.append(
                         BackspaceNewlineAction(
@@ -168,7 +185,7 @@ def main():
                             second_line=lines[cursor_line],
                         )
                     )
-                    actions[-1].do()
+                    do_action_checked(actions[-1])
 
             # Typing
             if event.type == pygame.KEYDOWN:
@@ -196,7 +213,7 @@ def main():
                             big_new_line=pressed_shift,
                         )
                     )
-                    actions[-1].do()
+                    do_action_checked(actions[-1])
 
                 # Tab
                 elif event.key == pygame.K_TAB:
@@ -205,7 +222,7 @@ def main():
                 # Normal typing
                 elif event.unicode and event.unicode in DISPLAYABLE_CHARACTERS:
                     actions.append(TypingAction(insert_line=cursor_line, insert_row=cursor_row, content=event.unicode))
-                    actions[-1].do()
+                    do_action_checked(actions[-1])
 
                 # Movement left
                 elif pressed_control and event.key == pygame.K_h:
