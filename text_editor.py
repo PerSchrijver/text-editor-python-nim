@@ -117,6 +117,12 @@ while running:
                 if can_move_right:
                     cursor_row += 1
 
+            # Movement down
+            elif pressed_control and event.key == pygame.K_j:
+                can_move_down = (cursor_line + 1) in range(len(lines))
+                if can_move_down:
+                    cursor_line += 1
+
     # Paint background
     screen.fill((255, 255, 255))
 
