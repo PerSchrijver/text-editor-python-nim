@@ -8,9 +8,9 @@ import pygame
 DISPLAYABLE_CHARACTERS = set(string.printable) - set(" \t\r\n\x0b\x0c")
 
 # Initialize screen
-WIDTH, HEIGHT = 1280, 720
+screen_width, screen_height = 1280, 720
 LEFT_PADDING = 400
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.init()
 
 # Enable key repeating
