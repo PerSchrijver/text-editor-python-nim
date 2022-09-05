@@ -5,7 +5,7 @@ from typing import NamedTuple
 import pygame
 
 # Initialize performance necessary constants
-DISPLAYABLE_CHARACTERS = set(string.printable) - set(" \t\r\n")
+DISPLAYABLE_CHARACTERS = set(string.printable) - set(" \t\r\n\x0b\x0c")
 
 # Initialize screen
 WIDTH, HEIGHT = 1280, 720
