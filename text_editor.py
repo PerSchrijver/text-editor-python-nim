@@ -55,6 +55,17 @@ class NewlineAction:
     line_content: str
     big_new_line: bool
 
+    def do(self):
+        global cursor_line, cursor_row
+        text = lines[self.from_line].text
+        lines[self.from_line] = replace(lines[self.from_line], text=text[: self.from_row])
+        if self.big_new_line:
+            lines.insert(self.from_line + 1, Line(*REGULAR_FONT_AND_SIZE, text[self.from_row :], 8))
+        else:
+            lines.insert(self.from_line + 1, Line(*REGULAR_FONT_AND_SIZE, text[self.from_row :], 0))
+        cursor_line = self.from_line + 1
+        cursor_row = 0
+
     def undo(self):
         global cursor_row, cursor_line
         lines[self.from_line] = replace(lines[self.from_line], text=self.line_content)
@@ -178,14 +189,7 @@ def main():
                             big_new_line=pressed_shift,
                         )
                     )
-                    text = lines[cursor_line].text
-                    lines[cursor_line] = replace(lines[cursor_line], text=text[:cursor_row])
-                    if pressed_shift:
-                        lines.insert(cursor_line + 1, Line(*REGULAR_FONT_AND_SIZE, text[cursor_row:], 8))
-                    else:
-                        lines.insert(cursor_line + 1, Line(*REGULAR_FONT_AND_SIZE, text[cursor_row:], 0))
-                    cursor_line += 1
-                    cursor_row = 0
+                    actions[-1].do()
 
                 # Tab
                 elif event.key == pygame.K_TAB:
