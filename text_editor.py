@@ -40,6 +40,21 @@ class NewlineAction:
     big_new_line: bool
 
 
+@dataclass
+class BackspaceCharacterAction:
+    from_line: int
+    from_row: int
+    content: str
+
+
+@dataclass
+class BackspaceNewlineAction:
+    from_line: int
+    from_row: int
+    first_line: Line
+    second_line: Line
+
+
 # Initialize editor state
 REGULAR_FONT_AND_SIZE = "Roboto-Regular.ttf", 16
 lines = [
@@ -70,10 +85,23 @@ while running:
         # Backspace
         if event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
             if len(lines) > cursor_line and cursor_row > 0:
+                actions.append(
+                    BackspaceCharacterAction(
+                        from_line=cursor_line, from_row=cursor_row, content=lines[cursor_line].text[cursor_row - 1]
+                    )
+                )
                 text = lines[cursor_line].text
                 lines[cursor_line] = replace(lines[cursor_line], text=text[: cursor_row - 1] + text[cursor_row + 0 :])
                 cursor_row -= 1
             elif len(lines) > cursor_line and cursor_row == 0 and cursor_line > 0:
+                actions.append(
+                    BackspaceNewlineAction(
+                        from_line=cursor_line,
+                        from_row=cursor_row,
+                        first_line=lines[cursor_line - 1],
+                        second_line=lines[cursor_line],
+                    )
+                )
                 line = lines[cursor_line]
                 text_a = lines[cursor_line - 1].text
                 text_b = lines[cursor_line].text
@@ -187,6 +215,21 @@ while running:
                             lines[last_action.from_line], text=last_action.line_content
                         )
                         lines.pop(last_action.from_line + 1)
+                        cursor_row = last_action.from_row
+                        cursor_line = last_action.from_line
+
+                    elif isinstance(last_action, BackspaceCharacterAction):
+                        text = lines[last_action.from_line].text
+                        undone_text = (
+                            text[: last_action.from_row - 1] + last_action.content + text[last_action.from_row - 1 :]
+                        )
+                        lines[last_action.from_line] = replace(lines[last_action.from_line], text=undone_text)
+                        cursor_row = last_action.from_row
+                        cursor_line = last_action.from_line
+
+                    elif isinstance(last_action, BackspaceNewlineAction):
+                        lines[last_action.from_line - 1] = last_action.first_line
+                        lines.insert(last_action.from_line, last_action.second_line)
                         cursor_row = last_action.from_row
                         cursor_line = last_action.from_line
 
