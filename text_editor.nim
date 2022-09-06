@@ -10,6 +10,9 @@ const
 
   TextHeight = 16
 
+type Globals* = object
+  lines: seq[string]
+
 proc drawText(renderer: RendererPtr, font: FontPtr, text: cstring, color: Color, x: cint, y: cint) =
   let
     surface = ttf.renderTextBlended(font, text, color)
@@ -26,7 +29,7 @@ proc drawText(renderer: RendererPtr, font: FontPtr, text: cstring, color: Color,
   )
   renderer.copy texture, nil, addr r
 
-proc draw(renderer: RendererPtr, font: FontPtr, dt: float32) =
+proc draw(globals: Globals, renderer: RendererPtr, font: FontPtr, dt: float32) =
   renderer.setDrawColor 255, 255, 255, 255 # black
   renderer.clear()
 
@@ -36,8 +39,8 @@ proc draw(renderer: RendererPtr, font: FontPtr, dt: float32) =
   discard ttf.sizeText(font, "X", addr w, addr h)
 
   var y: cint = 10
-  for t in ["yo", "bro", "gehoe"]:
-    renderer.drawText(font, t, color(55, 53, 47, 0), 10, y)
+  for t in globals.lines:
+    renderer.drawText(font, cstring(t), color(55, 53, 47, 0), 10, y)
     y += h
   
   renderer.present()
@@ -140,6 +143,8 @@ proc main =
   var
     running = true
 
+    globals = Globals(lines: @["yo", "bro", "gehoe"])
+
     dt: float32
 
     counter: uint64
@@ -171,6 +176,6 @@ proc main =
       else:
         discard
 
-    draw(renderer, font, dt)
+    globals.draw(renderer, font, dt)
 
 main()
