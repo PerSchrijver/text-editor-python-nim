@@ -145,18 +145,28 @@ def do_action_checked(action):
 
 # Initialize editor state
 REGULAR_FONT_AND_SIZE = "Roboto-Regular.ttf", 16
-lines = [
-    Line("Roboto-Bold.ttf", 40, "Answers questions", 0),
-    Line(*REGULAR_FONT_AND_SIZE, "What is the dataset? We do", 0),
-    Line(*REGULAR_FONT_AND_SIZE, "no know. But what is life?", 8),
-    Line(*REGULAR_FONT_AND_SIZE, "", 0),
-    Line(*REGULAR_FONT_AND_SIZE, "Life is Mineplex", 0),
-    Line(*REGULAR_FONT_AND_SIZE, "Life is Super Paintball", 30),
-]
 cursor_line = 1
 cursor_row = "Life is Mineplex".find("Mineplex")
 maybe_saved_cursor_row = None
-actions = []
+
+lines = [Line("Roboto-Bold.ttf", 40, "", 0)]
+actions = [
+    TypingAction(0, 0, "Answers questions"),
+    NewlineAction(0, len("Answers questions"), "Answers questions", False),
+    TypingAction(1, 0, "What is the dataset? We do"),
+    NewlineAction(1, len("What is the dataset? We do"), "What is the dataset? We do", True),
+    TypingAction(2, 0, "not know. But whatis life?"),
+    NewlineAction(2, len("not know. But what is life?"), "not know. But whatis life?", False),
+    TypingAction(3, 0, ""),
+    NewlineAction(3, len(""), "", False),
+    TypingAction(4, 0, "Life is MineplexXX"),
+    BackspaceCharacterAction(4, len("Life is MineplexXX"), "X"),
+    BackspaceCharacterAction(4, len("Life is MineplexX"), "X"),
+    NewlineAction(4, len("Life is Mineplex"), "Life is Mineplex", True),
+    TypingAction(5, 0, "Life is Super Paintball"),
+]
+for action in actions:
+    action.do()
 
 # Run main loop
 def main():
