@@ -333,6 +333,7 @@ def main():
                 elif pressed_control and event.key == pygame.K_h:
                     maybe_saved_cursor_row = None
                     can_move_left = (cursor_row - 1) in range(lines[cursor_line].text_length() + 1)
+                    print("Trying to move left, can move left:", can_move_left, cursor_row)
                     if can_move_left:
                         cursor_row -= 1
 
@@ -409,7 +410,7 @@ def main():
             # Draw cursor
             if line_index == cursor_line:
                 cursor_x = LEFT_PADDING
-                for item in line.items:
+                for item in line.items_before_row(cursor_row):
                     cursor_x += pygame.font.Font(line.font, line.size).size(item.content)[0]
                 pygame.draw.rect(
                     screen,
