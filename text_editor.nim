@@ -13,7 +13,8 @@ const
 type Globals* = object
   lines: seq[string]
 
-proc drawText(renderer: RendererPtr, font: FontPtr, text: cstring, color: Color, x: cint, y: cint) =
+proc drawText(renderer: RendererPtr, font: FontPtr, text: cstring, color: Color,
+    x: cint, y: cint) =
   let
     surface = ttf.renderTextBlended(font, text, color)
     texture = renderer.createTextureFromSurface(surface)
@@ -42,9 +43,9 @@ proc draw(globals: Globals, renderer: RendererPtr, font: FontPtr, dt: float32) =
   for t in globals.lines:
     renderer.drawText(font, cstring(t), color(55, 53, 47, 0), 10, y)
     y += h
-  
+
   renderer.present()
-  
+
 
 type SDLException = object of Defect
 
@@ -64,7 +65,7 @@ type
     Return
     Tab
     None
-  
+
   Input* = object
     case kind*: InputKind:
     of DisplayableCharacter:
@@ -94,7 +95,7 @@ func toInput(key: Scancode, mod_state: Keymod): Input =
       of SDL_SCANCODE_RETURN: Input(kind: Return)
       of SDL_SCANCODE_TAB: Input(kind: Tab)
       else: Input(kind: None)
-  
+
   # Ctrl and only ctrl
   elif (mod_state and MOD_CTRL) != 0 and (mod_state and not MOD_CTRL) == 0:
     case key
@@ -171,7 +172,8 @@ proc main =
 
 
       of KeyDown:
-        echo $toInput(event.evKeyboard.keysym.scancode, cast[Keymod](event.evKeyboard.keysym.modstate))
+        echo $toInput(event.evKeyboard.keysym.scancode, cast[Keymod](
+            event.evKeyboard.keysym.modstate))
 
       else:
         discard
