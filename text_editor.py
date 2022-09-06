@@ -219,12 +219,6 @@ def do_action_checked(action):
     action.do()
 
 
-# Debug test
-l = Line(None, None, [LineItem("Hey Minecrafters")], None)
-print(l.items_before_row(5), "Hey Minecrafters"[:5])
-print(l.items_after_row(5), "Hey Minecrafters"[5:])
-# exit()
-
 # Initialize editor state
 REGULAR_FONT_AND_SIZE = "Roboto-Regular.ttf", 16
 cursor_line = 0
@@ -237,8 +231,8 @@ actions = [
     NewlineAction(0, len("Answers questions"), [LineItem(""), LineItem("Answers questions")], False),
     TypingAction(1, 0, "What is the dataset? We do"),
     NewlineAction(1, len("What is the dataset? We do"), [LineItem("What is the dataset? We do")], True),
-    TypingAction(2, 0, "not know. But whatis life?"),
-    NewlineAction(2, len("not know. But what is life?"), [LineItem("not know. But whatis life?")], False),
+    TypingAction(2, 0, "not know. But what is life?"),
+    NewlineAction(2, len("not know. But what is life?"), [LineItem("not know. But what is life?")], False),
     TypingAction(3, 0, ""),
     NewlineAction(3, len(""), [LineItem("")], False),
     TypingAction(4, 0, "Life is MineplexXX"),
@@ -249,11 +243,9 @@ actions = [
 ]
 redo_actions = []
 for action in actions:
-    print("Going to do action:", action)
     do_action_checked(action)
     assert all(isinstance(l, Line) for l in lines)
     assert all(all(isinstance(i, LineItem) for i in l.items) for l in lines)
-    # action.do()
 
 # Run main loop
 def main():
@@ -333,7 +325,6 @@ def main():
                 elif pressed_control and event.key == pygame.K_h:
                     maybe_saved_cursor_row = None
                     can_move_left = (cursor_row - 1) in range(lines[cursor_line].text_length() + 1)
-                    print("Trying to move left, can move left:", can_move_left, cursor_row)
                     if can_move_left:
                         cursor_row -= 1
 
