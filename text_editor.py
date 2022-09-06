@@ -112,6 +112,7 @@ class ColoredLineItem(LineItem):
     color: Tuple[int, int, int]
 
 
+# Actions
 @dataclass
 class TypingAction:
     insert_line: int
