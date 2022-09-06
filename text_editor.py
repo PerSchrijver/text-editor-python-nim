@@ -74,9 +74,7 @@ class Line:
     @staticmethod
     def with_text_added_to_items(items: List["LineItem"], text: str) -> List["LineItem"]:
         assert len(items)
-        got = items[:-1]
-        got.append(replace(items[-1], content=items[-1].content + text))
-        return got
+        return Line.merge_two_list_item_lists(items[:-1], [replace(items[-1], content=items[-1].content + text)])
 
     @staticmethod
     def merge_two_list_item_lists(first: List["LineItem"], second: List["LineItem"]) -> List["LineItem"]:
@@ -116,8 +114,10 @@ class TypingAction:
         line = lines[self.insert_line]
         lines[self.insert_line] = replace(
             line,
-            items=Line.with_text_added_to_items(line.items_before_row(cursor_row), self.content)
-            + line.items_after_row(cursor_row),
+            items=Line.merge_two_list_item_lists(
+                Line.with_text_added_to_items(line.items_before_row(cursor_row), self.content),
+                line.items_after_row(cursor_row),
+            ),
         )
         cursor_row = self.insert_row + len(self.content)
         cursor_line = self.insert_line
@@ -125,8 +125,8 @@ class TypingAction:
     def undo(self):
         global cursor_row, cursor_line
         line = lines[self.insert_line]
-        undone_items = line.items_before_row(self.insert_row) + line.items_after_row(
-            len(self.content) + self.insert_row
+        undone_items = Line.merge_two_list_item_lists(
+            line.items_before_row(self.insert_row), line.items_after_row(len(self.content) + self.insert_row)
         )
         lines[self.insert_line] = replace(lines[self.insert_line], items=undone_items)
         cursor_row = self.insert_row
