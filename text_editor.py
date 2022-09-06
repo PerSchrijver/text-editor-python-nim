@@ -140,6 +140,8 @@ def do_action_checked(action):
 
     assert new_state_saved == initial_state_saved
 
+    redo_actions.clear()
+
     action.do()
 
 
@@ -167,6 +169,7 @@ actions = [
 ]
 for action in actions:
     action.do()
+redo_actions = []
 
 # Run main loop
 def main():
@@ -282,6 +285,14 @@ def main():
                     if actions:
                         last_action = actions.pop()
                         last_action.undo()
+                        redo_actions.append(last_action)
+
+                # Redo
+                elif pressed_control and event.key == pygame.K_y:
+                    if redo_actions:
+                        last_action = redo_actions.pop()
+                        last_action.do()
+                        actions.append(last_action)
 
             # Screen resizing
             elif event.type == pygame.WINDOWRESIZED:
