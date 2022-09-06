@@ -69,12 +69,13 @@ type
     else:
       nil
 
-func isDisplayAsciiCharacterMap(): array[0..127, bool] =
+func isDisplayableAsciiCharacterMap(): array[0..127, bool] =
   for c in " qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*()_+~`-=[]\\;',./{}|:\"<>?":
     result[cast[cint](c)] = true
 
 func toInput(c: char): Input =
-  if cast[cint](c) in 0..127 and isDisplayAsciiCharacterMap()[cast[cint](c)]:
+  const table = isDisplayableAsciiCharacterMap()
+  if cast[cint](c) in 0..127 and table[cast[cint](c)]:
     Input(kind: DisplayableCharacter, character: c)
   else:
     Input(kind: None)
