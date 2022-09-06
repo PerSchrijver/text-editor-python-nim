@@ -102,7 +102,7 @@ class TypingAction:
     content: str
 
     def do(self):
-        global cursor_row
+        global cursor_row, cursor_line
         pp(f"Doing {self}, line now: {lines[self.insert_line]}")
         line = lines[self.insert_line]
         lines[self.insert_line] = replace(
@@ -112,6 +112,7 @@ class TypingAction:
         )
         pp(f"Done {self}, line now: {lines[self.insert_line]}")
         cursor_row = self.insert_row + len(self.content)
+        cursor_line = self.insert_line
 
     def undo(self):
         global cursor_row, cursor_line
@@ -155,20 +156,33 @@ class BackspaceCharacterAction:
     content: str
 
     def do(self):
-        global cursor_row
+        global cursor_row, cursor_line
         line = lines[self.from_line]
-        lines[self.from_line] = replace(
-            line, items=line.items_before_row(self.from_row - 1) + line.items_after_row(self.from_row + 0)
-        )
+        first, second = line.items_before_row(self.from_row - 1), line.items_after_row(self.from_row + 0)
+        can_merge = len(first) and len(second) and type(first[-1]) == type(second[0])
+        if can_merge:
+            merged = replace(first[-1], content=first[-1].content + second[0].content)
+            new_items = first[:-1] + [merged] + second[1:]
+        else:
+            new_items = first + second
+        lines[self.from_line] = replace(line, items=new_items)
         cursor_row = self.from_row - 1
+        cursor_line = self.from_line
 
     def undo(self):
         global cursor_row, cursor_line
         line = lines[self.from_line]
-        undone_items = Line.with_text_added_to_items(
+        first, second = Line.with_text_added_to_items(
             line.items_before_row(self.from_row - 1), self.content
-        ) + line.items_after_row(self.from_row - 1)
-        lines[self.from_line] = replace(lines[self.from_line], items=undone_items)
+        ), line.items_after_row(self.from_row - 1)
+        can_merge = len(first) and len(second) and type(first[-1]) == type(second[0])
+        if can_merge:
+            merged = replace(first[-1], content=first[-1].content + second[0].content)
+            new_items = first[:-1] + [merged] + second[1:]
+        else:
+            new_items = first + second
+
+        lines[self.from_line] = replace(lines[self.from_line], items=new_items)
         cursor_row = self.from_row
         cursor_line = self.from_line
 
@@ -182,12 +196,18 @@ class BackspaceNewlineAction:
 
     def do(self):
         global cursor_row, cursor_line
-        items_a = lines[self.from_line - 1].items
-        items_b = lines[self.from_line].items
-        lines[self.from_line - 1] = replace(lines[self.from_line - 1], items=items_a + items_b)
+        first, second = lines[self.from_line - 1].items, lines[self.from_line].items
+        can_merge = len(first) and len(second) and type(first[-1]) == type(second[0])
+        if can_merge:
+            merged = replace(first[-1], content=first[-1].content + second[0].content)
+            new_items = first[:-1] + [merged] + second[1:]
+        else:
+            new_items = first + second
+
+        lines[self.from_line - 1] = replace(lines[self.from_line - 1], items=new_items)
         lines.pop(self.from_line)
         cursor_line = self.from_line - 1
-        cursor_row = Line.text_length_of_items(items_a)
+        cursor_row = Line.text_length_of_items(first)
 
     def undo(self):
         global cursor_row, cursor_line
@@ -199,10 +219,13 @@ class BackspaceNewlineAction:
 
 # Function to handle doing actions where we check undoing the action leaves us in the initial state
 def do_action_checked(action):
+    print("Doing action checked", action)
     initial_state = (lines, cursor_line, cursor_row)
     initial_state_saved = pickle.dumps(initial_state)
 
+    print("action.do();")
     action.do()
+    print("action.undo()")
     action.undo()
 
     new_state = (lines, cursor_line, cursor_row)
@@ -212,7 +235,7 @@ def do_action_checked(action):
     pp(pickle.loads(initial_state_saved))
     print("New:")
     pp(pickle.loads(new_state_saved))
-    # assert new_state_saved == initial_state_saved
+    assert new_state_saved == initial_state_saved
 
     redo_actions.clear()
 
@@ -228,8 +251,10 @@ maybe_saved_cursor_row = None
 lines = [Line("Roboto-Bold.ttf", 40, [LineItem("")], 0)]
 actions = [
     TypingAction(0, 0, "Answers questions"),
-    NewlineAction(0, len("Answers questions"), [LineItem(""), LineItem("Answers questions")], False),
-    TypingAction(1, 0, "What is the dataset? We do"),
+    NewlineAction(0, len("Answers questions"), [LineItem("Answers questions")], False),
+    TypingAction(1, 0, "What is the dataset?X"),
+    BackspaceCharacterAction(1, len("What is the dataset?X"), "X"),
+    TypingAction(1, len("What is the dataset?"), " We do"),
     NewlineAction(1, len("What is the dataset? We do"), [LineItem("What is the dataset? We do")], True),
     TypingAction(2, 0, "not know. But what is life?"),
     NewlineAction(2, len("not know. But what is life?"), [LineItem("not know. But what is life?")], False),
