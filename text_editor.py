@@ -62,9 +62,9 @@ class Line:
     def splitted_for_newline(self, row: int, big_newline: bool) -> Tuple["Line", "Line"]:
         first = replace(self, items=self.items_before_row(row))
         if big_newline:
-            second = Line(*REGULAR_FONT_AND_SIZE, self.items_after_row(row), 8)
+            second = Line(*REGULAR_FONT_AND_SIZE, self.items_after_row(row) or [LineItem("")], 8)
         else:
-            second = Line(*REGULAR_FONT_AND_SIZE, self.items_after_row(row), 0)
+            second = Line(*REGULAR_FONT_AND_SIZE, self.items_after_row(row) or [LineItem("")], 0)
         return first, second
 
     @staticmethod
@@ -83,6 +83,12 @@ class Line:
 class LineItem:
     content: str
 
+    def with_text_inserted(self, row: int, text: str) -> "Self":
+        return replace(self, content=self.content[:row] + text + self.content[row:])
+
+    def with_text_uninserted(self, row: int, text: str) -> "Self":
+        return replace(self, content=self.content[:row] + self.content[len(text) + row :])
+
 
 @dataclass(frozen=True)
 class ColoredLineItem(LineItem):
@@ -100,7 +106,9 @@ class TypingAction:
         pp(f"Doing {self}, line now: {lines[self.insert_line]}")
         line = lines[self.insert_line]
         lines[self.insert_line] = replace(
-            line, items=line.items_before_row(cursor_row) + [LineItem(self.content)] + line.items_after_row(cursor_row)
+            line,
+            items=Line.with_text_added_to_items(line.items_before_row(cursor_row), self.content)
+            + line.items_after_row(cursor_row),
         )
         pp(f"Done {self}, line now: {lines[self.insert_line]}")
         cursor_row = self.insert_row + len(self.content)
