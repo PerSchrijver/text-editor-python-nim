@@ -4,6 +4,7 @@ import pickle
 import string
 from typing import List, NamedTuple, Tuple
 import pygame
+from rich import print as pp
 
 # Initialize performance necessary constants
 DISPLAYABLE_CHARACTERS = set(string.printable) - set(" \t\r\n\x0b\x0c")
@@ -96,11 +97,12 @@ class TypingAction:
 
     def do(self):
         global cursor_row
+        pp(f"Doing {self}, line now: {lines[self.insert_line]}")
         line = lines[self.insert_line]
         lines[self.insert_line] = replace(
             line, items=line.items_before_row(cursor_row) + [LineItem(self.content)] + line.items_after_row(cursor_row)
         )
-        print(lines[self.insert_line], self.insert_row)
+        pp(f"Done {self}, line now: {lines[self.insert_line]}")
         cursor_row = self.insert_row + len(self.content)
 
     def undo(self):
@@ -110,6 +112,7 @@ class TypingAction:
             len(self.content) + self.insert_row
         )
         lines[self.insert_line] = replace(lines[self.insert_line], items=undone_items)
+        print(f"Undone {self}, line now:", lines[self.insert_line])
         cursor_row = self.insert_row
         cursor_line = self.insert_line
 
@@ -197,6 +200,10 @@ def do_action_checked(action):
     new_state = (lines, cursor_line, cursor_row)
     new_state_saved = pickle.dumps(new_state)
 
+    print("Initial:")
+    pp(pickle.loads(initial_state_saved))
+    print("New:")
+    pp(pickle.loads(new_state_saved))
     # assert new_state_saved == initial_state_saved
 
     redo_actions.clear()
@@ -212,14 +219,14 @@ print(l.items_after_row(5), "Hey Minecrafters"[5:])
 
 # Initialize editor state
 REGULAR_FONT_AND_SIZE = "Roboto-Regular.ttf", 16
-cursor_line = 1
-cursor_row = "Life is Mineplex".find("Mineplex")
+cursor_line = 0
+cursor_row = 0
 maybe_saved_cursor_row = None
 
 lines = [Line("Roboto-Bold.ttf", 40, [LineItem("")], 0)]
 actions = [
     TypingAction(0, 0, "Answers questions"),
-    NewlineAction(0, len("Answers questions"), [LineItem("Answers questions")], False),
+    NewlineAction(0, len("Answers questions"), [LineItem(""), LineItem("Answers questions")], False),
     TypingAction(1, 0, "What is the dataset? We do"),
     NewlineAction(1, len("What is the dataset? We do"), [LineItem("What is the dataset? We do")], True),
     TypingAction(2, 0, "not know. But whatis life?"),
@@ -234,7 +241,7 @@ actions = [
 ]
 redo_actions = []
 for action in actions:
-    print(action)
+    print("Going to do action:", action)
     do_action_checked(action)
     assert all(isinstance(l, Line) for l in lines)
     assert all(all(isinstance(i, LineItem) for i in l.items) for l in lines)
@@ -381,7 +388,7 @@ def main():
             real_font = pygame.font.Font(line.font, line.size)
             x = LEFT_PADDING
             for item in line.items:
-                screen.blit(real_font.render(item.content, True, (55, 53, 47)), (x, y))
+                screen.blit(real_font.render(item.content, True, (x * 17 % 170, x * 13 % 240, 47)), (x, y))
                 x += real_font.size(item.content)[0]
             y += real_font.size("X")[1]
 
