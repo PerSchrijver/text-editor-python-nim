@@ -78,6 +78,16 @@ class Line:
         got.append(replace(items[-1], content=items[-1].content + text))
         return got
 
+    @staticmethod
+    def merge_two_list_item_lists(first: List["LineItem"], second: List["LineItem"]) -> List["LineItem"]:
+        can_merge = len(first) and len(second) and type(first[-1]) == type(second[0])
+        if can_merge:
+            merged = replace(first[-1], content=first[-1].content + second[0].content)
+            new_items = first[:-1] + [merged] + second[1:]
+        else:
+            new_items = first + second
+        return new_items
+
 
 @dataclass(frozen=True)
 class LineItem:
@@ -103,14 +113,12 @@ class TypingAction:
 
     def do(self):
         global cursor_row, cursor_line
-        pp(f"Doing {self}, line now: {lines[self.insert_line]}")
         line = lines[self.insert_line]
         lines[self.insert_line] = replace(
             line,
             items=Line.with_text_added_to_items(line.items_before_row(cursor_row), self.content)
             + line.items_after_row(cursor_row),
         )
-        pp(f"Done {self}, line now: {lines[self.insert_line]}")
         cursor_row = self.insert_row + len(self.content)
         cursor_line = self.insert_line
 
@@ -121,7 +129,6 @@ class TypingAction:
             len(self.content) + self.insert_row
         )
         lines[self.insert_line] = replace(lines[self.insert_line], items=undone_items)
-        print(f"Undone {self}, line now:", lines[self.insert_line])
         cursor_row = self.insert_row
         cursor_line = self.insert_line
 
@@ -158,31 +165,25 @@ class BackspaceCharacterAction:
     def do(self):
         global cursor_row, cursor_line
         line = lines[self.from_line]
-        first, second = line.items_before_row(self.from_row - 1), line.items_after_row(self.from_row + 0)
-        can_merge = len(first) and len(second) and type(first[-1]) == type(second[0])
-        if can_merge:
-            merged = replace(first[-1], content=first[-1].content + second[0].content)
-            new_items = first[:-1] + [merged] + second[1:]
-        else:
-            new_items = first + second
-        lines[self.from_line] = replace(line, items=new_items)
+        lines[self.from_line] = replace(
+            line,
+            items=Line.merge_two_list_item_lists(
+                line.items_before_row(self.from_row - 1), line.items_after_row(self.from_row + 0)
+            ),
+        )
         cursor_row = self.from_row - 1
         cursor_line = self.from_line
 
     def undo(self):
         global cursor_row, cursor_line
         line = lines[self.from_line]
-        first, second = Line.with_text_added_to_items(
-            line.items_before_row(self.from_row - 1), self.content
-        ), line.items_after_row(self.from_row - 1)
-        can_merge = len(first) and len(second) and type(first[-1]) == type(second[0])
-        if can_merge:
-            merged = replace(first[-1], content=first[-1].content + second[0].content)
-            new_items = first[:-1] + [merged] + second[1:]
-        else:
-            new_items = first + second
-
-        lines[self.from_line] = replace(lines[self.from_line], items=new_items)
+        lines[self.from_line] = replace(
+            lines[self.from_line],
+            items=Line.merge_two_list_item_lists(
+                Line.with_text_added_to_items(line.items_before_row(self.from_row - 1), self.content),
+                line.items_after_row(self.from_row - 1),
+            ),
+        )
         cursor_row = self.from_row
         cursor_line = self.from_line
 
@@ -219,23 +220,25 @@ class BackspaceNewlineAction:
 
 # Function to handle doing actions where we check undoing the action leaves us in the initial state
 def do_action_checked(action):
-    print("Doing action checked", action)
     initial_state = (lines, cursor_line, cursor_row)
     initial_state_saved = pickle.dumps(initial_state)
 
-    print("action.do();")
     action.do()
-    print("action.undo()")
     action.undo()
 
     new_state = (lines, cursor_line, cursor_row)
     new_state_saved = pickle.dumps(new_state)
 
-    print("Initial:")
-    pp(pickle.loads(initial_state_saved))
-    print("New:")
-    pp(pickle.loads(new_state_saved))
-    assert new_state_saved == initial_state_saved
+    if new_state_saved != initial_state_saved:
+        print("Previous actions:")
+        for a in actions:
+            pp(a)
+        pp(f"While doing {action}, doing and undoing resulted in a difference")
+        print("Initial state:")
+        pp(pickle.loads(initial_state_saved))
+        print("New state:")
+        pp(pickle.loads(new_state_saved))
+        exit()
 
     redo_actions.clear()
 
@@ -413,7 +416,7 @@ def main():
             real_font = pygame.font.Font(line.font, line.size)
             x = LEFT_PADDING
             for item in line.items:
-                screen.blit(real_font.render(item.content, True, (x * 17 % 170, x * 13 % 240, 47)), (x, y))
+                screen.blit(real_font.render(item.content, True, (55, 53, 47)), (x, y))
                 x += real_font.size(item.content)[0]
             y += real_font.size("X")[1]
 
