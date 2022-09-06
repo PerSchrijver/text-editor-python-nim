@@ -73,6 +73,12 @@ type
     else:
       nil
 
+proc handleInput(globals: var Globals, input: Input) =
+  case input.kind:
+    of DisplayableCharacter:
+      globals.lines[^1].add(input.character)
+    else: discard
+
 func isDisplayableAsciiCharacterMap(): array[0..127, bool] =
   for c in " qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*()_+~`-=[]\\;',./{}|:\"<>?":
     result[cast[cint](c)] = true
@@ -168,10 +174,13 @@ proc main =
         break
 
       of TextInput:
+        globals.handleInput(toInput(event.evTextInput.text[0]))
         echo $toInput(event.evTextInput.text[0])
 
 
       of KeyDown:
+        globals.handleInput(toInput(event.evKeyboard.keysym.scancode, cast[
+            Keymod](event.evKeyboard.keysym.modstate)))
         echo $toInput(event.evKeyboard.keysym.scancode, cast[Keymod](
             event.evKeyboard.keysym.modstate))
 
