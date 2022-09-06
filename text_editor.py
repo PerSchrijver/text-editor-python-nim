@@ -2,7 +2,7 @@
 from dataclasses import dataclass, replace
 import pickle
 import string
-from typing import NamedTuple
+from typing import NamedTuple, Tuple
 import pygame
 
 # Initialize performance necessary constants
@@ -24,6 +24,14 @@ class Line:
     size: int
     text: str
     space_before: int
+
+    def splitted_for_newline(self, row: int, big_newline: bool) -> Tuple["Line", "Line"]:
+        first = replace(self, text=self.text[:row])
+        if big_newline:
+            second = Line(*REGULAR_FONT_AND_SIZE, self.text[row:], 8)
+        else:
+            second = Line(*REGULAR_FONT_AND_SIZE, self.text[row:], 0)
+        return first, second
 
 
 @dataclass
@@ -58,12 +66,9 @@ class NewlineAction:
 
     def do(self):
         global cursor_line, cursor_row
-        text = lines[self.from_line].text
-        lines[self.from_line] = replace(lines[self.from_line], text=text[: self.from_row])
-        if self.big_new_line:
-            lines.insert(self.from_line + 1, Line(*REGULAR_FONT_AND_SIZE, text[self.from_row :], 8))
-        else:
-            lines.insert(self.from_line + 1, Line(*REGULAR_FONT_AND_SIZE, text[self.from_row :], 0))
+        first, second = lines[self.from_line].splitted_for_newline(row=self.from_row, big_newline=self.big_new_line)
+        lines[self.from_line] = first
+        lines.insert(self.from_line + 1, second)
         cursor_line = self.from_line + 1
         cursor_row = 0
 
