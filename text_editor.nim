@@ -10,8 +10,22 @@ const
 
   TextHeight = 16
 
+type
+  LineItemKind* = enum
+    Textual
+    PythonCode
+
+  LineItem* = object
+    content: string
+    case kind*: LineItemKind
+      of Textual:
+        size: int
+      of PythonCode:
+        discard
+
+
 type Globals* = object
-  lines: seq[string]
+  lines: seq[LineItem]
 
 proc drawText(renderer: RendererPtr, font: FontPtr, text: cstring, color: Color,
     x: cint, y: cint) =
@@ -41,8 +55,13 @@ proc draw(globals: Globals, renderer: RendererPtr, font: FontPtr, dt: float32) =
 
   var y: cint = 10
   for t in globals.lines:
-    renderer.drawText(font, cstring(t), color(55, 53, 47, 0), 10, y)
-    y += h
+    case t.kind:
+    of Textual:
+      renderer.drawText(font, cstring(t.content), color(55, 53, 47, 0), 10, y)
+      y += h
+    of PythonCode:
+      renderer.drawText(font, cstring(t.content), color(55, 53, 247, 0), 10, y)
+      y += h
 
   renderer.present()
 
@@ -76,7 +95,7 @@ type
 proc handleInput(globals: var Globals, input: Input) =
   case input.kind:
     of DisplayableCharacter:
-      globals.lines[^1].add(input.character)
+      globals.lines[^1].content.add(input.character)
     else: discard
 
 func isDisplayableAsciiCharacterMap(): array[0..127, bool] =
@@ -150,7 +169,9 @@ proc main =
   var
     running = true
 
-    globals = Globals(lines: @["yo", "bro", "gehoe"])
+    globals = Globals(lines: @[LineItem(kind: PythonCode, content: "yo"),
+        LineItem(kind: Textual, content: "yo", size: 40), LineItem(
+        kind: PythonCode, content: "gehoe")])
 
     dt: float32
 
