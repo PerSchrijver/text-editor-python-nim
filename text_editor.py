@@ -2,7 +2,7 @@
 from dataclasses import dataclass, replace
 import pickle
 import string
-from typing import List, NamedTuple, Tuple
+from typing import List, Optional, Tuple
 import pygame
 from rich import print as pp
 
