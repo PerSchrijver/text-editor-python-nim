@@ -68,6 +68,15 @@ class Line:
         return first, second
 
     @staticmethod
+    def item_at_row(self, row: int) -> Optional[Tuple["LineItem", int]]:
+        for item in enumerate(self.items):
+            if row >= len(item.content):
+                row -= len(item.content)
+            else:
+                return item, row
+        return None
+
+    @staticmethod
     def text_length_of_items(items: List["LineItem"]) -> int:
         return sum(len(item.content) for item in items)
 
