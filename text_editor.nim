@@ -1,6 +1,11 @@
 #!/home/per/.nimble/bin/nim r
 import random
 
+import std/tables
+import std/sequtils
+import std/sugar
+import std/strutils
+
 import sdl2
 import sdl2/ttf
 
@@ -27,13 +32,19 @@ type
       of PythonCode:
         discard
 
+  AutoCompleteSnippet = distinct seq[string]
 
 type Globals* = object
   lines: seq[LineItem]
   current_line: LineIndex
+  known_completions: Table[string, AutoCompleteSnippet]
+  autocomplete_options: seq[string]
+  autocomplete_enabled: bool
 
 proc drawText(renderer: RendererPtr, font: FontPtr, text: cstring, color: Color,
     x: cint, y: cint) =
+  if text.len == 0:
+    return
   let
     surface = ttf.renderTextBlended(font, text, color)
     texture = renderer.createTextureFromSurface(surface)
@@ -70,8 +81,13 @@ proc draw(globals: Globals, renderer: RendererPtr, font: FontPtr, dt: float32) =
           w * t.indent, y)
       y += h
 
-  renderer.present()
+  if globals.autocomplete_enabled:
+    var y: cint = 10
+    for option in globals.autocomplete_options[0..min(5, globals.autocomplete_options.len - 1)]:
+      renderer.drawText(font, cstring($option), color(55, 53, 47, 0), 400, y)
+      y += h
 
+  renderer.present()
 
 type SDLException = object of Defect
 
@@ -100,11 +116,19 @@ type
     else:
       nil
 
+proc updateAutocomplete(globals: var Globals, term: string) =
+  globals.autocomplete_options = globals.known_completions.keys.toSeq.filter(x => x.contains(term))
+
+proc enableAutocomplete(globals: var Globals, term: string) =
+  globals.autocomplete_enabled = true
+  globals.updateAutocomplete(term)
+
 proc handleLineItemInput(globals: var Globals, line_item: var LineItem,
     input: Input) =
   case input.kind:
     of DisplayableCharacter:
       line_item.content.add(input.character)
+      globals.updateAutocomplete(line_item.content)
     of Tab:
       line_item.indent += 2
     of ShiftTab:
@@ -112,6 +136,8 @@ proc handleLineItemInput(globals: var Globals, line_item: var LineItem,
         line_item.indent -= 2
       else:
         line_item.indent = 0
+    of CtrlSpace:
+      globals.enableAutocomplete(line_item.content)
     else: discard
 
 proc handleInput(globals: var Globals, input: Input) =
@@ -192,16 +218,24 @@ proc main =
   var
     running = true
 
-    globals = Globals(lines: @[
-      LineItem(kind: PythonCode, content: "yo", index: LineIndex 0),
-      LineItem(kind: Textual, content: "yo", index: LineIndex 1, size: 40),
-      LineItem(kind: PythonCode, content: "gehoe", index: LineIndex 2)
-    ], current_line: LineIndex 1)
+    globals = Globals(
+      lines: @[
+        LineItem(kind: PythonCode, content: "yo", index: LineIndex 0),
+        LineItem(kind: Textual, content: "", index: LineIndex 1, size: 40),
+        LineItem(kind: PythonCode, content: "gehoe", index: LineIndex 2)
+      ],
+      current_line: LineIndex 1,
+      known_completions: {"print": AutoCompleteSnippet @["print"],
+          "map": AutoCompleteSnippet @["X", ".map(", "X", "=>", "X", ")"]}.toTable
+    )
 
     dt: float32
 
     counter: uint64
     previousCounter: uint64
+
+  for term in "printer! pineapple prone_to_failure exit uppercase".splitWhitespace:
+    globals.known_completions[term] = AutoCompleteSnippet @[term]
 
   counter = getPerformanceCounter()
 
