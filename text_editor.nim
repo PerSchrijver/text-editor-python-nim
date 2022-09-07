@@ -140,6 +140,10 @@ proc handleLineItemInput(globals: var Globals, line_item: var LineItem,
         line_item.indent = 0
     of CtrlSpace:
       globals.enableAutocomplete(line_item.content)
+    of Backspace:
+      if line_item.content.len > 0:
+        line_item.content = line_item.content[.. ^2]
+        globals.updateAutocomplete(line_item.content)
     else: discard
 
 proc handleInput(globals: var Globals, input: Input) =
