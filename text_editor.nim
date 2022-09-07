@@ -17,6 +17,7 @@ type
 
   LineItem* = object
     content: string
+    indent: cint
     case kind*: LineItemKind
       of Textual:
         size: int
@@ -57,10 +58,10 @@ proc draw(globals: Globals, renderer: RendererPtr, font: FontPtr, dt: float32) =
   for t in globals.lines:
     case t.kind:
     of Textual:
-      renderer.drawText(font, cstring(t.content), color(55, 53, 47, 0), 10, y)
+      renderer.drawText(font, cstring(t.content), color(55, 53, 47, 0), 10 + w * t.indent, y)
       y += h
     of PythonCode:
-      renderer.drawText(font, cstring(t.content), color(55, 53, 247, 0), 10, y)
+      renderer.drawText(font, cstring(t.content), color(55, 53, 247, 0), 10 + w * t.indent, y)
       y += h
 
   renderer.present()
@@ -83,6 +84,7 @@ type
     DisplayableCharacter
     Return
     Tab
+    ShiftTab
     None
 
   Input* = object
@@ -92,11 +94,21 @@ type
     else:
       nil
 
-proc handleInput(globals: var Globals, input: Input) =
+proc handleLineItemInput(globals: var Globals, line_item: var LineItem, input: Input) =
   case input.kind:
     of DisplayableCharacter:
-      globals.lines[^1].content.add(input.character)
+      line_item.content.add(input.character)
+    of Tab:
+      line_item.indent += 2
+    of ShiftTab:
+      if line_item.indent >= 2:
+        line_item.indent -= 2
+      else:
+        line_item.indent = 0
     else: discard
+
+proc handleInput(globals: var Globals, input: Input) =
+  globals.handleLineItemInput(globals.lines[^1], input)
 
 func isDisplayableAsciiCharacterMap(): array[0..127, bool] =
   for c in " qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*()_+~`-=[]\\;',./{}|:\"<>?":
@@ -118,7 +130,11 @@ func toInput(key: Scancode, mod_state: Keymod): Input =
   if (mod_state and not MOD_SHIFT) == 0:
     case key:
       of SDL_SCANCODE_RETURN: Input(kind: Return)
-      of SDL_SCANCODE_TAB: Input(kind: Tab)
+      of SDL_SCANCODE_TAB:
+        if (mod_state and MOD_SHIFT) == 0:
+          Input(kind: Tab)
+        else:
+          Input(kind: ShiftTab)
       else: Input(kind: None)
 
   # Ctrl and only ctrl
