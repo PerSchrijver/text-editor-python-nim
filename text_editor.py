@@ -2,6 +2,7 @@
 from dataclasses import dataclass, replace
 import pickle
 import string
+import time
 from typing import List, Optional, Tuple
 import pygame
 from rich import print as pp
@@ -332,6 +333,8 @@ def main():
                 pressed_alt = bool(pressed_mods_int & pygame.KMOD_ALT)
                 pressed_caps = pressed_scancodes[pygame.KSCAN_CAPSLOCK]
 
+                print("Pressed alt", pressed_alt)
+
                 # Debug print
                 if event.unicode:
                     print(f"Pressed key {repr(event.unicode)} ({ord(event.unicode)}) with keycode {event.key}")
@@ -355,7 +358,7 @@ def main():
                     pass
 
                 # Normal typing
-                elif event.unicode and event.unicode in DISPLAYABLE_CHARACTERS:
+                elif (not pressed_alt) and event.unicode in DISPLAYABLE_CHARACTERS:
                     actions.append(TypingAction(insert_line=cursor_line, insert_row=cursor_row, content=event.unicode))
                     do_action_checked(actions[-1])
 
@@ -410,6 +413,27 @@ def main():
                         last_action = redo_actions.pop()
                         last_action.do()
                         actions.append(last_action)
+
+                # Crash on arrow use
+                elif event.key in (pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT):
+                    screen.fill((240, 45, 45))
+                    screen.blit(
+                        pygame.font.Font("Roboto-Bold.ttf", 70).render("studeren = hydrateren", True, (55, 53, 47)),
+                        (100, 100),
+                    )
+                    pygame.display.flip()
+                    time.sleep(2)
+                    exit()
+
+                elif pressed_alt and event.key in (pygame.K_h, pygame.K_j, pygame.K_k, pygame.K_l):
+                    screen.fill((240, 45, 45))
+                    screen.blit(
+                        pygame.font.Font("Roboto-Bold.ttf", 70).render("gebruik de pijltjes", True, (55, 53, 47)),
+                        (100, 100),
+                    )
+                    pygame.display.flip()
+                    time.sleep(2)
+                    exit()
 
             # Screen resizing
             elif event.type == pygame.WINDOWRESIZED:
