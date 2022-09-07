@@ -423,7 +423,6 @@ def main():
                     )
                     pygame.display.flip()
                     time.sleep(2)
-                    exit()
 
                 elif pressed_alt and event.key in (pygame.K_h, pygame.K_j, pygame.K_k, pygame.K_l):
                     screen.fill((240, 45, 45))
@@ -433,7 +432,6 @@ def main():
                     )
                     pygame.display.flip()
                     time.sleep(2)
-                    exit()
 
             # Screen resizing
             elif event.type == pygame.WINDOWRESIZED:
