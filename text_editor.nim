@@ -103,10 +103,12 @@ type
     CtrlK
     CtrlL
     CtrlSpace
+    CtrlBackspace
     DisplayableCharacter
     Return
     Tab
     ShiftTab
+    Backspace
     None
 
   Input* = object
@@ -163,6 +165,7 @@ func toInput(key: Scancode, mod_state: Keymod): Input =
   if (mod_state and not MOD_SHIFT) == 0:
     case key:
       of SDL_SCANCODE_RETURN: Input(kind: Return)
+      of SDL_SCANCODE_BACKSPACE: Input(kind: Backspace)
       of SDL_SCANCODE_TAB:
         if (mod_state and MOD_SHIFT) == 0:
           Input(kind: Tab)
@@ -178,6 +181,7 @@ func toInput(key: Scancode, mod_state: Keymod): Input =
     of SDL_SCANCODE_K: Input(kind: CtrlK)
     of SDL_SCANCODE_L: Input(kind: CtrlL)
     of SDL_SCANCODE_SPACE: Input(kind: CtrlSpace)
+    of SDL_SCANCODE_BACKSPACE: Input(kind: CtrlBackspace)
     else: Input(kind: None)
 
   else:
