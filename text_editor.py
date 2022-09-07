@@ -7,7 +7,7 @@ import pygame
 from rich import print as pp
 
 # Initialize performance necessary constants
-DISPLAYABLE_CHARACTERS = set(string.printable) - set(" \t\r\n\x0b\x0c")
+DISPLAYABLE_CHARACTERS = set(string.printable) - set("\t\r\n\x0b\x0c")
 
 # Initialize screen
 screen_width, screen_height = 1280, 720
