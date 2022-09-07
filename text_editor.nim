@@ -15,7 +15,10 @@ type
     Textual
     PythonCode
 
+  LineIndex = distinct cint
+
   LineItem* = object
+    index: LineIndex
     content: string
     indent: cint
     case kind*: LineItemKind
@@ -27,6 +30,7 @@ type
 
 type Globals* = object
   lines: seq[LineItem]
+  current_line: LineIndex
 
 proc drawText(renderer: RendererPtr, font: FontPtr, text: cstring, color: Color,
     x: cint, y: cint) =
@@ -58,10 +62,12 @@ proc draw(globals: Globals, renderer: RendererPtr, font: FontPtr, dt: float32) =
   for t in globals.lines:
     case t.kind:
     of Textual:
-      renderer.drawText(font, cstring(t.content), color(55, 53, 47, 0), 10 + w * t.indent, y)
+      renderer.drawText(font, cstring(t.content), color(55, 53, 47, 0), 10 + w *
+          t.indent, y)
       y += h
     of PythonCode:
-      renderer.drawText(font, cstring(t.content), color(55, 53, 247, 0), 10 + w * t.indent, y)
+      renderer.drawText(font, cstring(t.content), color(55, 53, 247, 0), 10 +
+          w * t.indent, y)
       y += h
 
   renderer.present()
@@ -94,7 +100,8 @@ type
     else:
       nil
 
-proc handleLineItemInput(globals: var Globals, line_item: var LineItem, input: Input) =
+proc handleLineItemInput(globals: var Globals, line_item: var LineItem,
+    input: Input) =
   case input.kind:
     of DisplayableCharacter:
       line_item.content.add(input.character)
@@ -108,7 +115,7 @@ proc handleLineItemInput(globals: var Globals, line_item: var LineItem, input: I
     else: discard
 
 proc handleInput(globals: var Globals, input: Input) =
-  globals.handleLineItemInput(globals.lines[^1], input)
+  globals.handleLineItemInput(globals.lines[cast[cint](globals.current_line)], input)
 
 func isDisplayableAsciiCharacterMap(): array[0..127, bool] =
   for c in " qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890!@#$%^&*()_+~`-=[]\\;',./{}|:\"<>?":
@@ -185,9 +192,11 @@ proc main =
   var
     running = true
 
-    globals = Globals(lines: @[LineItem(kind: PythonCode, content: "yo"),
-        LineItem(kind: Textual, content: "yo", size: 40), LineItem(
-        kind: PythonCode, content: "gehoe")])
+    globals = Globals(lines: @[
+      LineItem(kind: PythonCode, content: "yo", index: LineIndex 0),
+      LineItem(kind: Textual, content: "yo", index: LineIndex 1, size: 40),
+      LineItem(kind: PythonCode, content: "gehoe", index: LineIndex 2)
+    ], current_line: LineIndex 1)
 
     dt: float32
 
