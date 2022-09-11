@@ -125,6 +125,15 @@ proc enableAutocomplete(globals: var Globals, term: string) =
   globals.autocomplete_enabled = true
   globals.updateAutocomplete(term)
 
+proc completeAutocomplete(globals: var Globals) =
+  assert globals.autocomplete_enabled
+  if globals.known_completions.len == 0:
+    return
+  let option = globals.known_completions[globals.autocomplete_options[0]]
+  globals.lines[cast[cint](globals.current_line)].content = cast[seq[string]](option).join("-")
+  globals.updateAutocomplete("")
+  globals.autocomplete_enabled = false
+
 proc handleLineItemInput(globals: var Globals, line_item: var LineItem,
     input: Input) =
   case input.kind:
@@ -132,7 +141,10 @@ proc handleLineItemInput(globals: var Globals, line_item: var LineItem,
       line_item.content.add(input.character)
       globals.updateAutocomplete(line_item.content)
     of Tab:
-      line_item.indent += 2
+      if globals.autocomplete_enabled:
+        globals.completeAutocomplete()
+      else:
+        line_item.indent += 2
     of ShiftTab:
       if line_item.indent >= 2:
         line_item.indent -= 2
