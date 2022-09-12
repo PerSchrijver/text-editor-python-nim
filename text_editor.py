@@ -262,6 +262,7 @@ cursor_line = 0
 cursor_row = 0
 maybe_saved_cursor_row = None
 
+
 lines = [Line("Roboto-Bold.ttf", 40, [LineItem("")], 0)]
 actions = [
     TypingAction(0, 0, "Answers questions"),
@@ -447,8 +448,10 @@ def main():
             pygame.draw.rect(screen, (240, 140, 130), (LEFT_PADDING - 10, y - line.space_before, 3, line.space_before))
             real_font = pygame.font.Font(line.font, line.size)
             x = LEFT_PADDING
-            for item in line.items:
-                screen.blit(real_font.render(item.content, True, (55, 53, 47)), (x, y))
+            for i, item in enumerate(line.items):
+                screen.blit(
+                    real_font.render(item.content, True, ((55 + 73 * i) % 240, (53 + 83 * i) % 230, 47)), (x, y)
+                )
                 x += real_font.size(item.content)[0]
             y += real_font.size("X")[1]
 
