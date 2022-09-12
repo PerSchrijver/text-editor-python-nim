@@ -256,6 +256,7 @@ proc main =
 
   for term in "printer! pineapple prone_to_failure exit uppercase".splitWhitespace:
     globals.known_completions[term] = AutoCompleteSnippet @[term]
+  globals.known_completions["if"] = AutocompleteSnippet @["if", "???", "then", "???", "else","???(Unit)"]
 
   counter = getPerformanceCounter()
 
