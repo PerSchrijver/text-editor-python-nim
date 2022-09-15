@@ -19,6 +19,7 @@ type
   LineItemKind* = enum
     Textual
     PythonCode
+    Box
 
   LineIndex = distinct cint
 
@@ -31,6 +32,8 @@ type
         size: int
       of PythonCode:
         discard
+      of Box:
+        box_size: cint
 
   AutoCompleteSnippet = distinct seq[string]
 
@@ -80,6 +83,11 @@ proc draw(globals: Globals, renderer: RendererPtr, font: FontPtr, dt: float32) =
       renderer.drawText(font, cstring(t.content), color(55, 53, 247, 0), 10 +
           w * t.indent, y)
       y += h
+    of Box:
+      var r = rect(10 + w * t.indent, 5 + y, t.box_size, t.box_size)
+      renderer.setDrawColor(255, 0, 0)
+      renderer.fillRect(addr r)
+      y += 5 + t.box_size + 5
 
   if globals.autocomplete_enabled:
     var y: cint = 10
@@ -138,6 +146,14 @@ proc handleLineItemInput(globals: var Globals, line_item: var LineItem,
     input: Input) =
   case input.kind:
     of DisplayableCharacter:
+      case line_item.kind:
+        of Box:
+          if input.character == 'a' and line_item.box_size > 10:
+            line_item.box_size -= 4
+          if input.character == 'd' and line_item.box_size < 120:
+            line_item.box_size += 4
+        else:
+          discard
       line_item.content.add(input.character)
       globals.updateAutocomplete(line_item.content)
     of Tab:
@@ -242,9 +258,10 @@ proc main =
       lines: @[
         LineItem(kind: PythonCode, content: "yo", index: LineIndex 0),
         LineItem(kind: Textual, content: "", index: LineIndex 1, size: 40),
-        LineItem(kind: PythonCode, content: "gehoe", index: LineIndex 2)
+        LineItem(kind: PythonCode, content: "gehoe", index: LineIndex 2),
+        LineItem(kind: Box, content: "shouldn't be here", index: LineIndex 3, box_size: 30),
       ],
-      current_line: LineIndex 1,
+      current_line: LineIndex 3,
       known_completions: {"print": AutoCompleteSnippet @["print"],
           "map": AutoCompleteSnippet @["X", ".map(", "X", "=>", "X", ")"]}.toTable
     )
