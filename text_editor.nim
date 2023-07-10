@@ -9,6 +9,14 @@ import std/strutils
 import sdl2
 import sdl2/ttf
 
+
+type SDLException = object of Defect
+
+template sdlFailIf(condition: typed, reason: string) =
+  if condition: raise SDLException.newException(
+    reason & ", SDL error " & $getError()
+  )
+
 const
   WindowWidth = 1280
   WindowHeight = 720
@@ -72,8 +80,21 @@ proc drawText(renderer: RendererPtr, font: FontPtr, text: cstring, color: Color,
     x: cint, y: cint) =
   if text.len == 0:
     return
+  assert not renderer.isNil
+  assert not font.isNil
+  assert not text.isNil
   let
     surface = ttf.renderTextBlended(font, text, color)
+  sdlFailIf(surface.isNil):
+    "Font rendering"
+  assert not surface.isNil
+  echo $surface.h
+  echo text
+
+  echo $cast[uint64](renderer)
+  echo $renderer.setDrawColor(0, 0, 0)
+
+  let
     texture = renderer.createTextureFromSurface(surface)
 
   surface.freeSurface
@@ -120,13 +141,6 @@ proc draw(globals: Globals, renderer: RendererPtr, font: FontPtr, dt: float32) =
       y += h
 
   renderer.present()
-
-type SDLException = object of Defect
-
-template sdlFailIf(condition: typed, reason: string) =
-  if condition: raise SDLException.newException(
-    reason & ", SDL error " & $getError()
-  )
 
 type
   InputKind* = enum
@@ -274,7 +288,7 @@ proc main =
   sdlFailIf(not ttfInit()): "SDL_TTF initialization failed"
   defer: ttfQuit()
 
-  let font = ttf.openFont("/home/per/.local/share/fonts/Hack Regular Nerd Font Complete.ttf", TextHeight)
+  let font = ttf.openFont("Roboto-Regular.ttf", TextHeight)
   sdlFailIf font.isNil: "font could not be created"
 
   var
