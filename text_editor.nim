@@ -15,6 +15,30 @@ const
 
   TextHeight = 16
 
+# 
+# types
+#   symbols 
+#   relations between types
+# procs
+#   statements
+#   expressions
+# funcs
+#   expressions
+# expressions
+#   comments
+#   blocks
+#   function application
+#   literals
+#   symbols
+# function application
+#   operators
+#   custom formatters
+# 
+
+# Difference between literal and function applications with custom formatters?
+#   Primitiviality.
+
+
 type
   LineItemKind* = enum
     Textual
@@ -155,6 +179,8 @@ proc handleLineItemInput(globals: var Globals, line_item: var LineItem,
         else:
           discard
       line_item.content.add(input.character)
+      # if input.character == ' ':
+      #   globals.lines[line_item.index].add(LineItem(kind: PythonCode, content: "", index: LineIndex line_item.index))
       globals.updateAutocomplete(line_item.content)
     of Tab:
       if globals.autocomplete_enabled:
